@@ -1,0 +1,19 @@
+[general]
+name = QConsolidate
+description = Consolidate QGIS project into one directory
+category = Plugins
+version = 0.0.1
+qgisMinimumVersion = 1.8.0
+
+icon = icons/qconsolidate.png
+
+authorName=Alexander Bruy (NextGIS)
+
+tags=project, consolidate
+
+homepage = http://gis-lab.info/qa/qconsolidate-eng.html
+tracker = http://hub.qgis.org/projects/qconsolidate
+repository = http://github.com/alexbruy/qconsolidate
+
+experimental = True
+deprecated = False
