@@ -36,7 +36,7 @@ def category():
   return "Plugins"
 
 def version():
-  return "0.0.1"
+  return "0.0.1 aplha"
 
 def qgisMinimumVersion():
   return "1.8.0"

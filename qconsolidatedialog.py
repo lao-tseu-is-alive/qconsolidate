@@ -87,13 +87,13 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
 
     # process layers
     lstLayers = self.iface.legendInterface().layers()
-    print "Layer in project:", len( lstLayers )
+    #print "Layer in project:", len( lstLayers )
     for layer in lstLayers:
       layerType = layer.type()
       if layerType == QgsMapLayer.VectorLayer:
-        print "found vector layer"
-        print layer.storageType()
-        print layer.source()
+        #print "found vector layer"
+        #print layer.storageType()
+        #print layer.source()
         self.copyVectorLayer( layer.source(), workDir.absolutePath() + "/layers" )
       elif layerType == QgsMapLayer.RasterLayer:
         print "found raster layer"
@@ -102,25 +102,29 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
 
     self.copyAndUpdateProject( workDir.absolutePath() )
 
+    QMessageBox.information( self, self.tr( "QConsolidate" ),
+                         self.tr( "Completed" ) )
+
   def copyVectorLayer( self, layer, destDir ):
     fi = QFileInfo( layer )
     mask = fi.path() + "/" + fi.baseName() + ".*"
-    print "mask", mask
+    #print "mask", mask
     files = glob.glob( unicode( mask ) )
-    print "Files:", files
+    #print "Files:", files
     fl = QFile()
     for f in files:
       fi.setFile( f )
       fl.setFileName( f )
-      print "COPY FROM", f
-      print "TO", str( destDir + "/" + fi.fileName() )
+      #print "COPY FROM", f
+      #print "TO", str( destDir + "/" + fi.fileName() )
       fl.copy( destDir + "/" + fi.fileName() )
 
   def copyAndUpdateProject( self, destDir ):
     prjPath = QgsProject.instance().fileName()
-    print "Project", prjPath
+    #print "Project", prjPath
     fi = QFileInfo( prjPath )
     fl = QFile( prjPath )
+    newFile = destDir + "/" + fi.fileName()
     fl.copy( destDir + "/" + fi.fileName() )
 
     fl.setFileName( destDir + "/" + fi.fileName() )
@@ -144,4 +148,35 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
                            .arg( errorString ) )
       return
 
+    fl.close()
+
     root = doc.documentElement()
+    e = root.firstChildElement( "projectlayers" )
+    child = e.firstChildElement()
+    while not child.isNull():
+      ds = child.firstChildElement( "datasource" )
+      #print "TEXT", ds.text()
+      fi.setFile( ds.text() )
+      #print "FILE", fi.fileName()
+      p = "./layers/" + fi.fileName()
+      #print "NEW", p
+      tn = ds.firstChild()
+      tn.setNodeValue( p )
+
+      child = child.nextSiblingElement()
+
+    # ensure that we have relative paths
+    e = root.firstChildElement( "properties" )
+    e.firstChildElement( "Paths" ).firstChild().firstChild().setNodeValue( "false" )
+
+    fi = QFileInfo( newFile )
+    fl = QFile( newFile )
+    if not fl.open( QIODevice.WriteOnly | QIODevice.Text ):
+      QMessageBox.warning( self, self.tr( "Project saving error" ),
+                           self.tr( "Cannot write file %1:\n%2." )
+                           .arg( fi.fileName() )
+                           .arg( fl.errorString() ) )
+      return
+
+    out = QTextStream( fl )
+    doc.save( out, 4 )
