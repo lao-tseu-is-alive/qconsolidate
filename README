@@ -1,6 +1,12 @@
 QConsolidate
 ----------------------------------------
-FIXME
+QConsolidate is a QGIS plugin used to consolidate all project layers into
+single user defined folder. This can be useful is you decide to share
+project with many layers from different directories with other person.
+
+Currently plugins supports only file-based vector layers.
+
+     WARNING! THIS IS ALPHA VERSION. USE AT OWN RISK
 
 For more info please visit:
  * in Russian http://gis-lab.info/qa/qconsolidate.html

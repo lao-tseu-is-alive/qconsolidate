@@ -104,7 +104,7 @@ class QConsolidatePlugin( object ):
     lines.addWidget( ver )
     lines.addWidget( QLabel( QApplication.translate( "QConsolidate", "Consolidate QGIS project into one directory" ) ) )
     lines.addWidget( QLabel( QApplication.translate( "QConsolidate", "<b>Developers:</b>" ) ) )
-    lines.addWidget( QLabel( "  Alexander Bruy" ) )
+    lines.addWidget( QLabel( "  Alexander Bruy (NextGIS)" ) )
     lines.addWidget( QLabel( QApplication.translate( "QConsolidate", "<b>Homepage:</b>") ) )
 
     overrideLocale = QSettings().value( "locale/overrideFlag", QVariant( False ) ).toBool()
