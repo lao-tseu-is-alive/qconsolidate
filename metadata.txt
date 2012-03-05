@@ -11,9 +11,9 @@ authorName=Alexander Bruy (NextGIS)
 
 tags=project, consolidate
 
-homepage = http://gis-lab.info/qa/qconsolidate-eng.html
-tracker = http://hub.qgis.org/projects/qconsolidate
-repository = http://github.com/alexbruy/qconsolidate
+homepage =
+tracker =
+repository =
 
 experimental = True
 deprecated = False

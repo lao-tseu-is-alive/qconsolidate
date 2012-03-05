@@ -8,16 +8,5 @@ Currently plugins supports only file-based vector layers.
 
      WARNING! THIS IS ALPHA VERSION. USE AT OWN RISK
 
-For more info please visit:
- * in Russian http://gis-lab.info/qa/qconsolidate.html
- * in English http://gis-lab.info/qa/qconsolidate-eng.html
-
-Source code can be found at:
-http://github.com/alexbruy/qconsolidate
-
-For bugreports please visit:
-http://hub.qgis.org/projects/qconsolidate
-
-
         NextGIS - Open source geospatial solutions
                     http://nextgis.org
