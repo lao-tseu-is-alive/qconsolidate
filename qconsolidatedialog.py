@@ -63,6 +63,8 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
     self.setupUi( self )
     self.iface = iface
 
+    self.workThread = None
+
     self.btnOk = self.buttonBox.button( QDialogButtonBox.Ok )
     self.btnClose = self.buttonBox.button( QDialogButtonBox.Close )
 
@@ -78,6 +80,78 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
     self.leOutputDir.setText( outDir )
 
   def accept( self ):
+    outputDir = self.leOutputDir.text()
+    if outputDir.isEmpty():
+      QMessageBox.warning( self,
+                           self.tr( "QConsolidate: Error" ),
+                           self.tr( "Output directory is not set. Please specify output directory." ) )
+      return
+
+    # create directory for layers if not exists
+    d = QDir( outputDir )
+    if d.exists( "layers" ):
+      res = QMessageBox.question( self,
+                                  self.tr( "Directory exists" ),
+                                  self.tr( "Output directory already contains 'layers' subdirectory. " +
+                                           "Maybe this directory was used to consolidate another project. Continue?" ),
+                                  QMessageBox.Yes | QMessageBox.No )
+      if res == QMessageBox.No:
+        return
+    else:
+      if not d.mkdir( "layers" ):
+        QMessageBox.warning( self,
+                             self.tr( "QConsolidate: Error" ),
+                             self.tr( "Can't create directory for layers." ) )
+        return
+
+    # copy project file
+    projectFile = QgsProject.instance().fileName()
+    f = QFile( projectFile )
+    newProjectFile = outputDir + "/" + QFileInfo( projectFile ).fileName()
+    f.copy( newProjectFile )
+
+    # start consolidate thread that does all real work
+    self.workThread = ConsolidateThread( self.iface, outputDir, newProjectFile )
+    QObject.connect( self.workThread, SIGNAL( "rangeChanged( int )" ), self.setProgressRange )
+    QObject.connect( self.workThread, SIGNAL( "updateProgress()" ), self.updateProgress )
+    QObject.connect( self.workThread, SIGNAL( "processFinished()" ), self.processFinished )
+    QObject.connect( self.workThread, SIGNAL( "processInterrupted()" ), self.processInterrupted )
+
+    self.btnClose.setText( self.tr( "Cancel" ) )
+    QObject.disconnect( self.buttonBox, SIGNAL( "rejected()" ), self.reject )
+    QObject.connect( self.btnClose, SIGNAL( "clicked()" ), self.stopProcessing )
+
+    self.workThread.start()
+
+  def setProgressRange( self, maxValue ):
+    self.progressBar.setRange( 0, maxValue )
+    self.progressBar.setValue( 0 )
+
+  def updateProgress( self ):
+    self.progressBar.setValue( self.progressBar.value() + 1 )
+
+  def processFinished( self ):
+    self.stopProcessing()
+    self.restoreGui()
+
+  def processInterrupted( self ):
+    self.restoreGui()
+
+  def stopProcessing( self ):
+    if self.workThread != None:
+      self.workThread.stop()
+      self.workThread = None
+
+  def restoreGui( self ):
+    self.progressBar.setRange( 0, 1 )
+    self.progressBar.setValue( 0 )
+
+    QApplication.restoreOverrideCursor()
+    QObject.connect( self.buttonBox, SIGNAL( "rejected()" ), self.reject )
+    self.btnClose.setText( self.tr( "Close" ) )
+    self.btnOk.setEnabled( True )
+
+  def accept_old( self ):
     # first create directory for layers
     workDir = QDir( self.leOutputDir.text() )
     if not workDir.exists( "layers" ) and not workDir.mkdir( "layers" ):
