@@ -1,6 +1,7 @@
 SOURCES = __init__.py \
           qconsolidate.py \
-          qconsolidatedialog.py
+          qconsolidatedialog.py \
+          consolidatethread.py
 
 FORMS = qconsolidatedialogbase.ui
 

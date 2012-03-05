@@ -64,19 +64,19 @@ class ConsolidateThread( QThread ):
     for layer in layers:
       layerType = layer.type()
       if layerType == QgsMapLayer.VectorLayer:
-        print "found vector layer ", layer.name()
+        print "found vector layer", layer.name()
       elif layerType == QgsMapLayer.RasterLayer:
-        print "found raster layer ", layer.name()
+        print "found raster layer", layer.name()
       else:
         print "found layer", layer.name()
 
-    self.emit( SIGNAL( "updateProgress()" ) )
-    self.mutex.lock()
-    s = self.stopMe
-    self.mutex.unlock()
-    if s == 1:
-      interrupted = True
-      break
+      self.emit( SIGNAL( "updateProgress()" ) )
+      self.mutex.lock()
+      s = self.stopMe
+      self.mutex.unlock()
+      if s == 1:
+        interrupted = True
+        break
 
     # save updated project
 
@@ -95,19 +95,14 @@ class ConsolidateThread( QThread ):
   def loadProject( self ):
     f = QFile( self.projectFile )
     if not f.open( QIODevice.ReadOnly | QIODevice.Text ):
-      msg = self.tr( "Cannot read file %1:\n%2." )
-            .arg( self.projectFile )
-            .arg( f..errorString() )
+      msg = self.tr( "Cannot read file %1:\n%2." ).arg( self.projectFile ).arg( f.errorString() )
       self.emit( SIGNAL( "processError( PyQt_PyObject )" ), msg )
       return
 
     doc = QDomDocument()
     setOk, errorString, errorLine, errorColumn = doc.setContent( f, True )
     if not setOk:
-      msg = self.tr( "Parse error at line %1, column %2:\n%3" )
-            .arg( errorLine )
-            .arg( errorColumn )
-            .arg( errorString )
+      msg = self.tr( "Parse error at line %1, column %2:\n%3" ).arg( errorLine ).arg( errorColumn ).arg( errorString )
       self.emit( SIGNAL( "processError( PyQt_PyObject )" ), msg )
       return
 
