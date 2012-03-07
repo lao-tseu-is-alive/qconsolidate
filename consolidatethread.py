@@ -33,6 +33,8 @@ from PyQt4.QtXml import *
 from qgis.core import *
 from qgis.gui import *
 
+from osgeo import gdal
+
 import glob
 
 ogrDatabase = [ "PGeo",
@@ -116,11 +118,16 @@ class ConsolidateThread( QThread ):
         elif pt in vectorProviders:
           self.copyGenericVectorLayer( e, layer, layerName )
         else:
-          print "Provider %s currently not supported" % pt
+          print "Vector provider '%s' currently not supported" % pt
       elif layerType == QgsMapLayer.RasterLayer:
-        print "found raster layer", layer.name(), "\n"
+        print "found raster layer", layer.name()
+        pt = layer.providerType()
+        if pt == "gdal":
+          print "source", layer.source()
+        else:
+          print "Raster provider '%s' currently not supported" % pt
       else:
-        print "found unknown layer", layer.name(), "\n"
+        print "Layers with type '%s' currently not supported" % layerType
 
       self.emit( SIGNAL( "updateProgress()" ) )
       self.mutex.lock()
@@ -208,6 +215,30 @@ class ConsolidateThread( QThread ):
     tmpNode = layerNode.firstChildElement( "provider" )
     tmpNode.setAttribute( "encoding", enc )
     tmpNode.firstChild().setNodeValue( "ogr" )
+
+  def copyRasterLayer( self, layerElement, rLayer, layerName ):
+    outputFormat = "GTiff"
+    creationOptions = [ "COMPRESS=PACKBITS", "TILED=YES", "TFW=YES", "BIGTIFF=IF_NEEDED" ]
+
+    driver = gdal.GetDriverByName( outputFormat )
+    metadata = driver.GetMetadata()
+    if not ( metadata.has_key( gdal.DCAP_CREATE ) and metadata[ gdal.DCAP_CREATE ] == "YES" ):
+      print "Driver %s does not support Create() method." % outputFormat
+      return
+
+    # extract some metadata from source raster
+    width = src.RasterXSize
+    height = src.RasterYSize
+    bands = src.RasterCount
+    crs = src.GetProjection()
+    geoTransform = src.GetGeoTransform()
+    dataTypes = []
+    for i in xrange( 1, bands + 1 ):
+      b = src.GetRasterBand( i )
+      dataTypes.append( b.DataType )
+
+    # copy raster
+    dst = driver.Create( dst_filename, width, height, bands, gdal.GDT_Byte, creationOptions )
 
   def findLayerInProject( self, layerElement, layerName ):
     child = layerElement.firstChildElement()
