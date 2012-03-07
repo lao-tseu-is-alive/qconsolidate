@@ -36,28 +36,6 @@ from qgis.gui import *
 from ui_qconsolidatedialogbase import Ui_QConsolidateDialog
 import consolidatethread
 
-import glob
-
-databaseLayers = [ "PGeo",
-                   "SDE",
-                   "IDB",
-                   "INGRES",
-                   "MySQL",
-                   "MSSQLSpatial",
-                   "OCI",
-                   "ODBC",
-                   "OGDI",
-                   "PostgreSQL",
-                   "SQLite" ] # file or db?
-
-directoryLayers = [ "AVCBin",
-                    "GRASS",
-                    "UK. NTF",
-                    "TIGER" ]
-
-protocolLayers = [ "DODS",
-                   "GeoJSON" ]
-
 class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
   def __init__( self, iface ):
     QDialog.__init__( self )
@@ -117,6 +95,7 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
     QObject.connect( self.workThread, SIGNAL( "updateProgress()" ), self.updateProgress )
     QObject.connect( self.workThread, SIGNAL( "processFinished()" ), self.processFinished )
     QObject.connect( self.workThread, SIGNAL( "processInterrupted()" ), self.processInterrupted )
+    QObject.connect( self.workThread, SIGNAL( "processError( PyQt_PyObject )" ), self.processError )
 
     self.btnClose.setText( self.tr( "Cancel" ) )
     QObject.disconnect( self.buttonBox, SIGNAL( "rejected()" ), self.reject )
@@ -138,6 +117,13 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
   def processInterrupted( self ):
     self.restoreGui()
 
+  def processError( self, message ):
+    QMessageBox.warning( self,
+                         self.tr( "QConsolidate: Error" ),
+                         message )
+    self.restoreGui()
+    return
+
   def stopProcessing( self ):
     if self.workThread != None:
       self.workThread.stop()
@@ -152,17 +138,6 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
     self.btnClose.setText( self.tr( "Close" ) )
     self.btnOk.setEnabled( True )
 
-  #~ def accept_old( self ):
-    #~ # first create directory for layers
-    #~ workDir = QDir( self.leOutputDir.text() )
-    #~ if not workDir.exists( "layers" ) and not workDir.mkdir( "layers" ):
-      #~ QMessageBox.warning( self, self.tr( "QConsolidate: Error" ),
-                           #~ self.tr( "Can't create directory for layers." ) )
-      #~ return
-#~
-    #~ # process layers
-    #~ lstLayers = self.iface.legendInterface().layers()
-    #~ #print "Layer in project:", len( lstLayers )
     #~ for layer in lstLayers:
       #~ layerType = layer.type()
       #~ if layerType == QgsMapLayer.VectorLayer:
@@ -170,16 +145,11 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
         #~ #print layer.storageType()
         #~ #print layer.source()
         #~ self.copyVectorLayer( layer.source(), workDir.absolutePath() + "/layers" )
-      #~ elif layerType == QgsMapLayer.RasterLayer:
-        #~ print "found raster layer"
-      #~ else:
-        #~ print "This layer type currently not supported: ", layerType
-#~
+
     #~ self.copyAndUpdateProject( workDir.absolutePath() )
-#~
     #~ QMessageBox.information( self, self.tr( "QConsolidate" ),
                          #~ self.tr( "Completed" ) )
-#~
+
   #~ def copyVectorLayer( self, layer, destDir ):
     #~ fi = QFileInfo( layer )
     #~ mask = fi.path() + "/" + fi.baseName() + ".*"
@@ -193,7 +163,7 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
       #~ #print "COPY FROM", f
       #~ #print "TO", str( destDir + "/" + fi.fileName() )
       #~ fl.copy( destDir + "/" + fi.fileName() )
-#~
+
   #~ def copyAndUpdateProject( self, destDir ):
     #~ prjPath = QgsProject.instance().fileName()
     #~ #print "Project", prjPath
@@ -201,7 +171,7 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
     #~ fl = QFile( prjPath )
     #~ newFile = destDir + "/" + fi.fileName()
     #~ fl.copy( destDir + "/" + fi.fileName() )
-#~
+
     #~ fl.setFileName( destDir + "/" + fi.fileName() )
     #~ if not fl.open( QIODevice.ReadOnly | QIODevice.Text ):
       #~ QMessageBox.warning( self, self.tr( "Project loagind error" ),
@@ -209,12 +179,12 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
                            #~ .arg( fi.fileName() )
                            #~ .arg( fl.errorString() ) )
       #~ return
-#~
+
     #~ doc = QDomDocument()
     #~ errorString = None
     #~ errorLine = None
     #~ errorColumn = None
-#~
+
     #~ if not doc.setContent( fl, True ):
       #~ QMessageBox.warning( self, self.tr( "Project loagind error" ),
                            #~ self.tr( "Parse error at line %1, column %2:\n%3" )
@@ -222,9 +192,8 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
                            #~ .arg( errorColumn )
                            #~ .arg( errorString ) )
       #~ return
-#~
     #~ fl.close()
-#~
+
     #~ root = doc.documentElement()
     #~ e = root.firstChildElement( "projectlayers" )
     #~ child = e.firstChildElement()
@@ -237,13 +206,9 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
       #~ #print "NEW", p
       #~ tn = ds.firstChild()
       #~ tn.setNodeValue( p )
-#~
+
       #~ child = child.nextSiblingElement()
-#~
-    #~ # ensure that we have relative paths
-    #~ e = root.firstChildElement( "properties" )
-    #~ e.firstChildElement( "Paths" ).firstChild().firstChild().setNodeValue( "false" )
-#~
+
     #~ fi = QFileInfo( newFile )
     #~ fl = QFile( newFile )
     #~ if not fl.open( QIODevice.WriteOnly | QIODevice.Text ):
@@ -252,6 +217,6 @@ class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
                            #~ .arg( fi.fileName() )
                            #~ .arg( fl.errorString() ) )
       #~ return
-#~
+
     #~ out = QTextStream( fl )
     #~ doc.save( out, 4 )

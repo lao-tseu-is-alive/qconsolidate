@@ -1,6 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS><TS version="1.1">
 <context>
+    <name>ConsolidateThread</name>
+    <message>
+        <location filename="consolidatethread.py" line="149"/>
+        <source>Cannot read file %1:
+%2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="consolidatethread.py" line="156"/>
+        <source>Parse error at line %1, column %2:
+%3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="consolidatethread.py" line="166"/>
+        <source>Cannot write file %1:
+%2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="consolidatethread.py" line="197"/>
+        <source>Cannot copy layer %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>QConsolidate</name>
     <message>
         <location filename="qconsolidate.py" line="74"/>
@@ -62,7 +88,7 @@ Plugin will not be enabled.</source>
 <context>
     <name>QConsolidateDialog</name>
     <message>
-        <location filename="qconsolidatedialog.py" line="105"/>
+        <location filename="qconsolidatedialogbase.ui" line="14"/>
         <source>QConsolidate</source>
         <translation type="unfinished"></translation>
     </message>
@@ -77,51 +103,43 @@ Plugin will not be enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="qconsolidatedialog.py" line="72"/>
+        <location filename="qconsolidatedialog.py" line="53"/>
         <source>Select output directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="qconsolidatedialog.py" line="84"/>
+        <location filename="qconsolidatedialog.py" line="121"/>
         <source>QConsolidate: Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="qconsolidatedialog.py" line="84"/>
+        <location filename="qconsolidatedialog.py" line="64"/>
+        <source>Output directory is not set. Please specify output directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="qconsolidatedialog.py" line="72"/>
+        <source>Directory exists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="qconsolidatedialog.py" line="72"/>
+        <source>Output directory already contains &apos;layers&apos; subdirectory. Maybe this directory was used to consolidate another project. Continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="qconsolidatedialog.py" line="81"/>
         <source>Can&apos;t create directory for layers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="qconsolidatedialog.py" line="105"/>
-        <source>Completed</source>
+        <location filename="qconsolidatedialog.py" line="100"/>
+        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="qconsolidatedialog.py" line="144"/>
-        <source>Project loagind error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="qconsolidatedialog.py" line="132"/>
-        <source>Cannot read file %1:
-%2.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="qconsolidatedialog.py" line="144"/>
-        <source>Parse error at line %1, column %2:
-%3</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="qconsolidatedialog.py" line="175"/>
-        <source>Project saving error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="qconsolidatedialog.py" line="175"/>
-        <source>Cannot write file %1:
-%2.</source>
+        <location filename="qconsolidatedialog.py" line="138"/>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

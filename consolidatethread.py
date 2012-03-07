@@ -33,6 +33,32 @@ from PyQt4.QtXml import *
 from qgis.core import *
 from qgis.gui import *
 
+import glob
+
+ogrDatabase = [ "PGeo",
+                "SDE",
+                "IDB",
+                "INGRES",
+                "MySQL",
+                "MSSQLSpatial",
+                "OCI",
+                "ODBC",
+                "OGDI",
+                "PostgreSQL",
+                "SQLite" ] # file or db?
+
+ogrDirectory = [ "AVCBin",
+                 "GRASS",
+                 "UK. NTF",
+                 "TIGER" ]
+
+ogrProtocol = [ "DODS",
+                "GeoJSON" ] # file or protocol?
+
+dbProviders = [ "postgres",
+                "spatialite",
+                "sqlanywhere" ]
+
 class ConsolidateThread( QThread ):
   def __init__( self, iface, outputDir, projectFile ):
     QThread.__init__( self, QThread.currentThread() )
@@ -41,6 +67,7 @@ class ConsolidateThread( QThread ):
 
     self.iface = iface
     self.outputDir = outputDir
+    self.layersDir = outputDir + "/layers"
     self.projectFile = projectFile
 
   def run( self ):
@@ -58,17 +85,40 @@ class ConsolidateThread( QThread ):
     e = root.firstChildElement( "properties" )
     e.firstChildElement( "Paths" ).firstChild().firstChild().setNodeValue( "false" )
 
+    # get layers section in project
+    e = root.firstChildElement( "projectlayers" )
+
     # process layers
     layers = self.iface.legendInterface().layers()
     self.emit( SIGNAL( "rangeChanged( int )" ), len( layers ) )
+
     for layer in layers:
       layerType = layer.type()
       if layerType == QgsMapLayer.VectorLayer:
-        print "found vector layer", layer.name()
+        layerName = layer.name()
+        layerSource = layer.source()
+        pt = layer.providerType()
+        if pt == "ogr":
+          storage = str( layer.storageType() )
+          if storage in ogrDatabase:
+            print "db layer\n"
+          elif storage in ogrDirectory:
+            print "directory layer\n"
+          elif storage in ogrProtocol:
+            print "protocol layer\n"
+          else:
+            self.copyFileLayer( e, layerSource, layerName )
+        elif pt in dbProviders:
+          print "native database layer\n"
+          self.copyDatabaseLayer( e, layer, layerName )
+        elif pt == "grass":
+          print "GRASS layer\n"
+        else:
+          print "other providers\n"
       elif layerType == QgsMapLayer.RasterLayer:
-        print "found raster layer", layer.name()
+        print "found raster layer", layer.name(), "\n"
       else:
-        print "found layer", layer.name()
+        print "found unknown layer", layer.name(), "\n"
 
       self.emit( SIGNAL( "updateProgress()" ) )
       self.mutex.lock()
@@ -79,6 +129,7 @@ class ConsolidateThread( QThread ):
         break
 
     # save updated project
+    self.saveProject( doc )
 
     if not interrupted:
       self.emit( SIGNAL( "processFinished()" ) )
@@ -108,3 +159,59 @@ class ConsolidateThread( QThread ):
 
     f.close()
     return doc
+
+  def saveProject( self, doc ):
+    f = QFile( self.projectFile )
+    if not f.open( QIODevice.WriteOnly | QIODevice.Text ):
+      msg = self.tr( "Cannot write file %1:\n%2." ).arg( self.projectFile ).arg( f.errorString() )
+      self.emit( SIGNAL( "processError( PyQt_PyObject )" ), msg )
+      return
+
+    out = QTextStream( f )
+    doc.save( out, 4 )
+    f.close()
+
+  def copyFileLayer( self, layerElement, layerSource, layerName ):
+    # copy all files
+    fi = QFileInfo( layerSource )
+    mask = fi.path() + "/" + fi.baseName() + ".*"
+    files = glob.glob( unicode( mask ) )
+    fl = QFile()
+    for f in files:
+      fi.setFile( f )
+      fl.setFileName( f )
+      fl.copy( self.layersDir + "/" + fi.fileName() )
+
+    # update project
+    layerNode = self.findLayerInProject( layerElement, layerName )
+    sourceNode = layerNode.firstChildElement( "datasource" )
+    p = "./layers/" + QFileInfo( sourceNode.text() ).fileName()
+    sourceNode.firstChild().setNodeValue( p )
+
+  def copyDatabaseLayer( self, layerElement, vLayer, layerName ):
+    crs = vLayer.crs()
+    enc = vLayer.dataProvider().encoding()
+    outFile = QString( "%1/%2.shp" ).arg( self.layersDir ).arg( layerName )
+    error = QgsVectorFileWriter.writeAsVectorFormat( vLayer, outFile, enc, crs )
+    if error != QgsVectorFileWriter.NoError:
+      msg = self.tr( "Cannot copy layer %1" ).arg( layerName )
+      self.emit( SIGNAL( "processError( PyQt_PyObject )" ), msg )
+      return
+
+    # update project
+    layerNode = self.findLayerInProject( layerElement, layerName )
+    sourceNode = layerNode.firstChildElement( "datasource" )
+    p = QString( "./layers/%1.shp" ).arg( layerName )
+    sourceNode.firstChild().setNodeValue( p )
+    sourceNode = layerNode.firstChildElement( "provider" )
+    sourceNode.setAttribute( "encoding", enc )
+    sourceNode.firstChild().setNodeValue( "ogr" )
+
+  def findLayerInProject( self, layerElement, layerName ):
+    child = layerElement.firstChildElement()
+    while not child.isNull():
+      nm = child.firstChildElement( "layername" )
+      if nm.text() == layerName:
+        return child
+      child = child.nextSiblingElement()
+    return None
