@@ -55,9 +55,14 @@ ogrDirectory = [ "AVCBin",
 ogrProtocol = [ "DODS",
                 "GeoJSON" ] # file or protocol?
 
-dbProviders = [ "postgres",
-                "spatialite",
-                "sqlanywhere" ]
+vectorProviders = [ "gpx",
+                    "osm",
+                    "grass",
+                    "memory",
+                    "postgres",
+                    "spatialite",
+                    "sqlanywhere",
+                    "delimitedtext" ]
 
 class ConsolidateThread( QThread ):
   def __init__( self, iface, outputDir, projectFile ):
@@ -92,6 +97,8 @@ class ConsolidateThread( QThread ):
     layers = self.iface.legendInterface().layers()
     self.emit( SIGNAL( "rangeChanged( int )" ), len( layers ) )
 
+    ogrSupported = ogrDatabase + ogrDirectory
+
     for layer in layers:
       layerType = layer.type()
       if layerType == QgsMapLayer.VectorLayer:
@@ -100,21 +107,16 @@ class ConsolidateThread( QThread ):
         pt = layer.providerType()
         if pt == "ogr":
           storage = str( layer.storageType() )
-          if storage in ogrDatabase:
-            print "db layer\n"
-          elif storage in ogrDirectory:
-            print "directory layer\n"
+          if storage in ogrSupported:
+            self.copyGenericVectorLayer( e, layer, layerName )
           elif storage in ogrProtocol:
-            print "protocol layer\n"
+            print "Storage type '%s' currently not supported" % storage
           else:
             self.copyFileLayer( e, layerSource, layerName )
-        elif pt in dbProviders:
-          print "native database layer\n"
-          self.copyDatabaseLayer( e, layer, layerName )
-        elif pt == "grass":
-          print "GRASS layer\n"
+        elif pt in vectorProviders:
+          self.copyGenericVectorLayer( e, layer, layerName )
         else:
-          print "other providers\n"
+          print "Provider %s currently not supported" % pt
       elif layerType == QgsMapLayer.RasterLayer:
         print "found raster layer", layer.name(), "\n"
       else:
@@ -188,7 +190,7 @@ class ConsolidateThread( QThread ):
     p = "./layers/" + QFileInfo( sourceNode.text() ).fileName()
     sourceNode.firstChild().setNodeValue( p )
 
-  def copyDatabaseLayer( self, layerElement, vLayer, layerName ):
+  def copyGenericVectorLayer( self, layerElement, vLayer, layerName ):
     crs = vLayer.crs()
     enc = vLayer.dataProvider().encoding()
     outFile = QString( "%1/%2.shp" ).arg( self.layersDir ).arg( layerName )
