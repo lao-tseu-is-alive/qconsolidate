@@ -200,12 +200,12 @@ class ConsolidateThread( QThread ):
 
     # update project
     layerNode = self.findLayerInProject( layerElement, layerName )
-    sourceNode = layerNode.firstChildElement( "datasource" )
+    tmpNode = layerNode.firstChildElement( "datasource" )
     p = QString( "./layers/%1.shp" ).arg( layerName )
-    sourceNode.firstChild().setNodeValue( p )
-    sourceNode = layerNode.firstChildElement( "provider" )
-    sourceNode.setAttribute( "encoding", enc )
-    sourceNode.firstChild().setNodeValue( "ogr" )
+    tmpNode.firstChild().setNodeValue( p )
+    tmpNode = layerNode.firstChildElement( "provider" )
+    tmpNode.setAttribute( "encoding", enc )
+    tmpNode.firstChild().setNodeValue( "ogr" )
 
   def findLayerInProject( self, layerElement, layerName ):
     child = layerElement.firstChildElement()
