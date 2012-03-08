@@ -3,25 +3,25 @@
 <context>
     <name>ConsolidateThread</name>
     <message>
-        <location filename="consolidatethread.py" line="149"/>
+        <location filename="consolidatethread.py" line="159"/>
         <source>Cannot read file %1:
 %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="consolidatethread.py" line="156"/>
+        <location filename="consolidatethread.py" line="166"/>
         <source>Parse error at line %1, column %2:
 %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="consolidatethread.py" line="166"/>
+        <location filename="consolidatethread.py" line="176"/>
         <source>Cannot write file %1:
 %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="consolidatethread.py" line="197"/>
+        <location filename="consolidatethread.py" line="207"/>
         <source>Cannot copy layer %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -31,17 +31,6 @@
     <message>
         <location filename="qconsolidate.py" line="74"/>
         <source>Quantum GIS version detected: </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="qconsolidate.py" line="74"/>
-        <source>This version of QConsolidate requires at least QGIS version 1.0.0
-Plugin will not be enabled.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="qconsolidate.py" line="80"/>
-        <source>Moves overlapped points with same coordinates in a circle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -65,11 +54,6 @@ Plugin will not be enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="qconsolidate.py" line="105"/>
-        <source>Consolidate QGIS project into one directory</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="qconsolidate.py" line="106"/>
         <source>&lt;b&gt;Developers:&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
@@ -82,6 +66,23 @@ Plugin will not be enabled.</source>
     <message>
         <location filename="qconsolidate.py" line="125"/>
         <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="qconsolidate.py" line="74"/>
+        <source>This version of QConsolidate requires at least QGIS version 1.8.0
+Plugin will not be enabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="qconsolidate.py" line="80"/>
+        <source>Consolidates all layers from current QGIS project into one directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="qconsolidate.py" line="105"/>
+        <source>Consolidates all layers from current QGIS project
+into one directory</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
