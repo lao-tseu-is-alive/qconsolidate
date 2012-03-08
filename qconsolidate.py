@@ -73,11 +73,11 @@ class QConsolidatePlugin( object ):
     if int( self.QgisVersion ) < 10800:
       QMessageBox.warning( self.iface.mainWindow(), "QConsolidate",
                            QCoreApplication.translate( "QConsolidate", "Quantum GIS version detected: " ) + unicode( self.QgisVersion ) + ".xx\n" +
-                           QCoreApplication.translate( "QConsolidate", "This version of QConsolidate requires at least QGIS version 1.0.0\nPlugin will not be enabled." ) )
+                           QCoreApplication.translate( "QConsolidate", "This version of QConsolidate requires at least QGIS version 1.8.0\nPlugin will not be enabled." ) )
       return None
 
     self.actionRun = QAction( QIcon( ":/icons/qconsolidate.png" ), "QConsolidate", self.iface.mainWindow() )
-    self.actionRun.setStatusTip( QCoreApplication.translate( "QConsolidate", "Moves overlapped points with same coordinates in a circle" ) )
+    self.actionRun.setStatusTip( QCoreApplication.translate( "QConsolidate", "Consolidates all layers from current QGIS project into one directory" ) )
     self.actionAbout = QAction( QIcon( ":/icons/about.png" ), "About QConsolidate", self.iface.mainWindow() )
 
     QObject.connect( self.actionRun, SIGNAL( "triggered()" ), self.run )
@@ -102,7 +102,7 @@ class QConsolidatePlugin( object ):
     ver = QLabel( QApplication.translate( "QConsolidate", "Version: %1" ).arg( version() ) )
     ver.setAlignment( Qt.AlignHCenter | Qt.AlignVCenter )
     lines.addWidget( ver )
-    lines.addWidget( QLabel( QApplication.translate( "QConsolidate", "Consolidate QGIS project into one directory" ) ) )
+    lines.addWidget( QLabel( QApplication.translate( "QConsolidate", "Consolidates all layers from current QGIS project\ninto one directory" ) ) )
     lines.addWidget( QLabel( QApplication.translate( "QConsolidate", "<b>Developers:</b>" ) ) )
     lines.addWidget( QLabel( "  Alexander Bruy (NextGIS)" ) )
     lines.addWidget( QLabel( QApplication.translate( "QConsolidate", "<b>Homepage:</b>") ) )
@@ -113,14 +113,14 @@ class QConsolidatePlugin( object ):
     else:
       localeFullName = QSettings().value( "locale/userLocale", QVariant( "" ) ).toString()
 
-    localeShortName = localeFullName[ 0:2 ]
-    if localeShortName in [ "ru", "uk" ]:
-      link = QLabel( "<a href=\"http://gis-lab.info/qa/qconsolidate.html\">http://gis-lab.info/qa/qconsolidate.html</a>" )
-    else:
-      link = QLabel( "<a href=\"http://gis-lab.info/qa/qconsolidate-eng.html\">http://gis-lab.info/qa/qconsolidate-eng.html</a>" )
-
-    link.setOpenExternalLinks( True )
-    lines.addWidget( link )
+    #~ localeShortName = localeFullName[ 0:2 ]
+    #~ if localeShortName in [ "ru", "uk" ]:
+      #~ link = QLabel( "<a href=\"http://gis-lab.info/qa/qconsolidate.html\">http://gis-lab.info/qa/qconsolidate.html</a>" )
+    #~ else:
+      #~ link = QLabel( "<a href=\"http://gis-lab.info/qa/qconsolidate-eng.html\">http://gis-lab.info/qa/qconsolidate-eng.html</a>" )
+#~
+    #~ link.setOpenExternalLinks( True )
+    #~ lines.addWidget( link )
 
     btnClose = QPushButton( QApplication.translate( "QConsolidate", "Close" ) )
     lines.addWidget( btnClose )
