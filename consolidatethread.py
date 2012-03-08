@@ -84,6 +84,8 @@ class ConsolidateThread( QThread ):
 
     interrupted = False
 
+    gdal.AllRegister()
+
     # read project
     doc = self.loadProject()
     root = doc.documentElement()
@@ -120,10 +122,9 @@ class ConsolidateThread( QThread ):
         else:
           print "Vector provider '%s' currently not supported" % pt
       elif layerType == QgsMapLayer.RasterLayer:
-        print "found raster layer", layer.name()
         pt = layer.providerType()
         if pt == "gdal":
-          print "source", layer.source()
+          self.copyRasterLayer( e, layer.source(), layer.name() )
         else:
           print "Raster provider '%s' currently not supported" % pt
       else:
@@ -216,29 +217,60 @@ class ConsolidateThread( QThread ):
     tmpNode.setAttribute( "encoding", enc )
     tmpNode.firstChild().setNodeValue( "ogr" )
 
-  def copyRasterLayer( self, layerElement, rLayer, layerName ):
+  def copyRasterLayer( self, layerElement, layerPath, layerName ):
     outputFormat = "GTiff"
     creationOptions = [ "COMPRESS=PACKBITS", "TILED=YES", "TFW=YES", "BIGTIFF=IF_NEEDED" ]
 
     driver = gdal.GetDriverByName( outputFormat )
+    if driver is None:
+      print "Format driver %s not found." % outputFormat
+      return
+
     metadata = driver.GetMetadata()
-    if not ( metadata.has_key( gdal.DCAP_CREATE ) and metadata[ gdal.DCAP_CREATE ] == "YES" ):
-      print "Driver %s does not support Create() method." % outputFormat
+    if "DCAP_CREATE" not in metadata:
+      print "Format driver %s does not support creation and piecewise writing" % outputFormat
+      return
+
+    # open source raster
+    src = gdal.Open( unicode( layerPath ) )
+    if src is None:
+      print "Unable to open file", layerPath
       return
 
     # extract some metadata from source raster
     width = src.RasterXSize
     height = src.RasterYSize
     bands = src.RasterCount
+    dataType = src.GetRasterBand( 1 ).DataType
     crs = src.GetProjection()
     geoTransform = src.GetGeoTransform()
-    dataTypes = []
-    for i in xrange( 1, bands + 1 ):
-      b = src.GetRasterBand( i )
-      dataTypes.append( b.DataType )
 
     # copy raster
-    dst = driver.Create( dst_filename, width, height, bands, gdal.GDT_Byte, creationOptions )
+    dstFilename = unicode( "%s/%s.tif" % ( self.layersDir, layerName ) )
+    dst = driver.Create( dstFilename, width, height, bands, dataType, creationOptions )
+    if dst is None:
+      print "Creation failed"
+      return
+
+    dst.SetProjection( crs )
+    dst.SetGeoTransform( geoTransform )
+
+    # copy data from source file into output file
+    for i in xrange( 1, bands + 1 ):
+      sBand = src.GetRasterBand( i )
+      dBand = dst.GetRasterBand( i )
+
+      data = sBand.ReadRaster( 0, 0, width, height, width, height, dataType)
+      dBand.WriteRaster( 0, 0, width, height, data, width, height, dataType )
+
+    src = None
+    dst = None
+
+    # update project
+    layerNode = self.findLayerInProject( layerElement, layerName )
+    tmpNode = layerNode.firstChildElement( "datasource" )
+    p = QString( "./layers/%1.tif" ).arg( layerName )
+    tmpNode.firstChild().setNodeValue( p )
 
   def findLayerInProject( self, layerElement, layerName ):
     child = layerElement.firstChildElement()
