@@ -38,9 +38,10 @@ $(RES_FILES): $(RES_PATH)/%_rc.py: $(RES_PATH)/%.qrc
 clean:
 	rm -f $(ALL_FILES)
 	rm -f *.pyc
+	rm -f *.zip
 
 package:
-	cd .. && rm -f qconsolidate*.zip && zip -r qconsolidate.experimental.zip qconsolidate -x \*.pyc -x \*~ -x \*.git\*
+	cd .. && rm -f *.zip && zip -r qconsolidate.experimental.zip qconsolidate -x \*.pyc -x \*~ -x \*.git\*
 	mv ../qconsolidate.experimental.zip .
 
 upload:
