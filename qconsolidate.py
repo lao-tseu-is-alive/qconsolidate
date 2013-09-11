@@ -34,6 +34,7 @@ from qgis.core import *
 from qgis.gui import *
 
 import qconsolidatedialog
+import aboutdialog
 
 import resources_rc
 
@@ -89,33 +90,10 @@ class QConsolidatePlugin:
         self.iface.removePluginMenu(QCoreApplication.translate("QConsolidate", "QConsolidate"), self.actionAbout)
         self.iface.removeToolBarIcon(self.actionRun)
 
-    def about(self):
-        dlgAbout = QDialog()
-        dlgAbout.setWindowTitle(QApplication.translate("QConsolidate", "About QConsolidate"))
-        lines = QVBoxLayout(dlgAbout)
-        title = QLabel(QApplication.translate("QConsolidate", "<b>QConsolidate</b>"))
-        title.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        lines.addWidget(title)
-        ver = QLabel(QApplication.translate("QConsolidate", "Version: %1").arg(version()))
-        ver.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        lines.addWidget(ver)
-        lines.addWidget(QLabel(QApplication.translate("QConsolidate", "Consolidates all layers from current QGIS project\ninto one directory")))
-        lines.addWidget(QLabel(QApplication.translate("QConsolidate", "<b>Developers:</b>")))
-        lines.addWidget(QLabel("  Alexander Bruy (NextGIS)"))
-        lines.addWidget(QLabel(QApplication.translate("QConsolidate", "<b>Homepage:</b>")))
-
-        overrideLocale = QSettings().value("locale/overrideFlag", False, type=bool)
-        if not overrideLocale:
-            localeFullName = QLocale.system().name()
-        else:
-            localeFullName = QSettings().value("locale/userLocale", "")
-
-        btnClose = QPushButton(QApplication.translate("QConsolidate", "Close"))
-        lines.addWidget(btnClose)
-        btnClose.clicked.connect(dlgAbout.close)
-
-        dlgAbout.exec_()
-
     def run(self):
         dlg = qconsolidatedialog.QConsolidateDialog(self.iface)
+        dlg.exec_()
+
+    def about(self):
+        dlg = aboutdialog.AboutDialog()
         dlg.exec_()
