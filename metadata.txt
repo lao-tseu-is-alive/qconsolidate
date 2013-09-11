@@ -3,7 +3,7 @@ name=QConsolidate
 description=Consolidate QGIS project into one directory
 category=Plugins
 version=0.1.0
-qgisMinimumVersion=1.8.0
+qgisMinimumVersion=2.0
 
 author=Alexander Bruy
 email=alexander.bruy@gmail.com

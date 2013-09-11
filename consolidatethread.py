@@ -73,6 +73,12 @@ vectorProviders = ["gpx",
 
 
 class ConsolidateThread(QThread):
+    processError = pyqtSignal(str)
+    rangeChanged = pyqtSignal(int)
+    updateProgress = pyqtSignal()
+    processFinished = pyqtSignal()
+    processInterrupted = pyqtSignal()
+
     def __init__(self, iface, outputDir, projectFile):
         QThread.__init__(self, QThread.currentThread())
         self.mutex = QMutex()
@@ -105,7 +111,7 @@ class ConsolidateThread(QThread):
 
         # process layers
         layers = self.iface.legendInterface().layers()
-        self.emit(SIGNAL("rangeChanged(int)"), len(layers))
+        self.rangeChanged.emit(len(layers))
 
         ogrSupported = ogrDatabase + ogrDirectory
 
@@ -136,7 +142,7 @@ class ConsolidateThread(QThread):
             else:
                 print "Layers with type '%s' currently not supported" % layerType
 
-            self.emit(SIGNAL("updateProgress()"))
+            self.updateProgress.emit()
             self.mutex.lock()
             s = self.stopMe
             self.mutex.unlock()
@@ -148,9 +154,9 @@ class ConsolidateThread(QThread):
         self.saveProject(doc)
 
         if not interrupted:
-            self.emit(SIGNAL("processFinished()"))
+            self.processFinished.emit()
         else:
-            self.emit(SIGNAL("processInterrupted()"))
+            self.processInterrupted.emit()
 
     def stop(self):
         self.mutex.lock()
@@ -162,15 +168,15 @@ class ConsolidateThread(QThread):
     def loadProject(self):
         f = QFile(self.projectFile)
         if not f.open(QIODevice.ReadOnly | QIODevice.Text):
-            msg = self.tr("Cannot read file %1:\n%2.").arg(self.projectFile).arg(f.errorString())
-            self.emit(SIGNAL("processError(PyQt_PyObject)"), msg)
+            msg = self.tr("Cannot read file %s:\n%s.") % (self.projectFile, f.errorString())
+            self.processError.emit(msg)
             return
 
         doc = QDomDocument()
         setOk, errorString, errorLine, errorColumn = doc.setContent(f, True)
         if not setOk:
-            msg = self.tr("Parse error at line %1, column %2:\n%3").arg(errorLine).arg(errorColumn).arg(errorString)
-            self.emit(SIGNAL("processError(PyQt_PyObject)"), msg)
+            msg = self.tr("Parse error at line %d, column %d:\n%s") % (errorLine, errorColumn, errorString)
+            self.processError.emit(msg)
             return
 
         f.close()
@@ -179,8 +185,8 @@ class ConsolidateThread(QThread):
     def saveProject(self, doc):
         f = QFile(self.projectFile)
         if not f.open(QIODevice.WriteOnly | QIODevice.Text):
-            msg = self.tr("Cannot write file %1:\n%2.").arg(self.projectFile).arg(f.errorString())
-            self.emit(SIGNAL("processError(PyQt_PyObject)"), msg)
+            msg = self.tr("Cannot write file %s:\n%s.") % (self.projectFile, f.errorString())
+            self.processError.emit(msg)
             return
 
         out = QTextStream(f)
@@ -207,17 +213,17 @@ class ConsolidateThread(QThread):
     def copyGenericVectorLayer(self, layerElement, vLayer, layerName):
         crs = vLayer.crs()
         enc = vLayer.dataProvider().encoding()
-        outFile = QString("%1/%2.shp").arg(self.layersDir).arg(layerName)
+        outFile = "%s/%s.shp" % (self.layersDir, layerName)
         error = QgsVectorFileWriter.writeAsVectorFormat(vLayer, outFile, enc, crs)
         if error != QgsVectorFileWriter.NoError:
-            msg = self.tr("Cannot copy layer %1").arg(layerName)
-            self.emit(SIGNAL("processError(PyQt_PyObject)"), msg)
+            msg = self.tr("Cannot copy layer %s") % layerName
+            self.processError.emit(msg)
             return
 
         # update project
         layerNode = self.findLayerInProject(layerElement, layerName)
         tmpNode = layerNode.firstChildElement("datasource")
-        p = QString("./layers/%1.shp").arg(layerName)
+        p = "./layers/%s.shp" % layerName
         tmpNode.firstChild().setNodeValue(p)
         tmpNode = layerNode.firstChildElement("provider")
         tmpNode.setAttribute("encoding", enc)
@@ -275,7 +281,7 @@ class ConsolidateThread(QThread):
         # update project
         layerNode = self.findLayerInProject(layerElement, layerName)
         tmpNode = layerNode.firstChildElement("datasource")
-        p = QString("./layers/%1.tif").arg(layerName)
+        p = "./layers/%s.tif" % layerName
         tmpNode.firstChild().setNodeValue(p)
 
     def findLayerInProject(self, layerElement, layerName):

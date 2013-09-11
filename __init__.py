@@ -27,38 +27,6 @@
 #******************************************************************************
 
 
-def name():
-    return "QConsolidate"
-
-
-def description():
-    return "Consolidate QGIS project into one directory"
-
-
-def category():
-    return "Plugins"
-
-
-def version():
-    return "0.1.0"
-
-
-def qgisMinimumVersion():
-    return "1.8.0"
-
-
-def author():
-    return "Alexander Bruy"
-
-
-def email():
-    return "alexander.bruy@gmail.com"
-
-
-def icon():
-    return "icons/qconsolidate.png"
-
-
 def classFactory(iface):
     from qconsolidate import QConsolidatePlugin
     return QConsolidatePlugin(iface)

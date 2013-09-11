@@ -34,8 +34,8 @@ from PyQt4.QtXml import *
 from qgis.core import *
 from qgis.gui import *
 
-from ui_qconsolidatedialogbase import Ui_QConsolidateDialog
 import consolidatethread
+from ui_qconsolidatedialogbase import Ui_QConsolidateDialog
 
 
 class QConsolidateDialog(QDialog, Ui_QConsolidateDialog):
@@ -49,20 +49,21 @@ class QConsolidateDialog(QDialog, Ui_QConsolidateDialog):
         self.btnOk = self.buttonBox.button(QDialogButtonBox.Ok)
         self.btnClose = self.buttonBox.button(QDialogButtonBox.Close)
 
-        QObject.connect(self.btnBrowse, SIGNAL("clicked()"), self.setOutDirectory)
+        self.btnBrowse.clicked.connect(self.setOutDirectory)
 
     def setOutDirectory(self):
         outDir = QFileDialog.getExistingDirectory(self,
                                                   self.tr("Select output directory"),
-                                                  ".")
-        if outDir.isEmpty():
+                                                  "."
+                                                 )
+        if not outDir:
             return
 
         self.leOutputDir.setText(outDir)
 
     def accept(self):
         outputDir = self.leOutputDir.text()
-        if outputDir.isEmpty():
+        if not outputDir:
             QMessageBox.warning(self,
                                 self.tr("QConsolidate: Error"),
                                 self.tr("Output directory is not set. Please specify output directory.")
@@ -96,17 +97,20 @@ class QConsolidateDialog(QDialog, Ui_QConsolidateDialog):
 
         # start consolidate thread that does all real work
         self.workThread = consolidatethread.ConsolidateThread(self.iface, outputDir, newProjectFile)
-        QObject.connect(self.workThread, SIGNAL("rangeChanged(int)"), self.setProgressRange)
-        QObject.connect(self.workThread, SIGNAL("updateProgress()"), self.updateProgress)
-        QObject.connect(self.workThread, SIGNAL("processFinished()"), self.processFinished)
-        QObject.connect(self.workThread, SIGNAL("processInterrupted()"), self.processInterrupted)
-        QObject.connect(self.workThread, SIGNAL("processError(PyQt_PyObject)"), self.processError)
+        self.workThread.rangeChanged.connect(self.setProgressRange)
+        self.workThread.updateProgress.connect(self.updateProgress)
+        self.workThread.processFinished.connect(self.processFinished)
+        self.workThread.processInterrupted.connect(self.processInterrupted)
+        self.workThread.processError.connect(self.processError)
 
         self.btnClose.setText(self.tr("Cancel"))
-        QObject.disconnect(self.buttonBox, SIGNAL("rejected()"), self.reject)
-        QObject.connect(self.btnClose, SIGNAL("clicked()"), self.stopProcessing)
+        self.buttonBox.rejected.disconnect(self.reject)
+        self.btnClose.clicked.connect(self.stopProcessing)
 
         self.workThread.start()
+
+    def reject(self):
+        QDialog.reject(self)
 
     def setProgressRange(self, maxValue):
         self.progressBar.setRange(0, maxValue)
@@ -140,6 +144,6 @@ class QConsolidateDialog(QDialog, Ui_QConsolidateDialog):
         self.progressBar.setValue(0)
 
         QApplication.restoreOverrideCursor()
-        QObject.connect(self.buttonBox, SIGNAL("rejected()"), self.reject)
+        self.buttonBox.rejected.connect(self.reject)
         self.btnClose.setText(self.tr("Close"))
         self.btnOk.setEnabled(True)

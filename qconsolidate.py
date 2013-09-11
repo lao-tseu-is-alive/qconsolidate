@@ -33,32 +33,26 @@ from PyQt4.QtGui import *
 from qgis.core import *
 from qgis.gui import *
 
-from __init__ import version
-
 import qconsolidatedialog
 
 import resources_rc
 
 
-class QConsolidatePlugin(object):
+class QConsolidatePlugin:
     def __init__(self, iface):
         self.iface = iface
-        self.iface = iface
 
-        try:
-            self.QgisVersion = unicode(QGis.QGIS_VERSION_INT)
-        except:
-            self.QgisVersion = unicode(QGis.qgisVersion)[0]
+        self.qgsVersion = unicode(QGis.QGIS_VERSION_INT)
 
         # For i18n support
         userPluginPath = QFileInfo(QgsApplication.qgisUserDbFilePath()).path() + "/python/plugins/qconsolidate"
         systemPluginPath = QgsApplication.prefixPath() + "/python/plugins/qconsolidate"
 
-        overrideLocale = QSettings().value("locale/overrideFlag", QVariant(False)).toBool()
+        overrideLocale = QSettings().value("locale/overrideFlag", False, type=bool)
         if not overrideLocale:
             localeFullName = QLocale.system().name()
         else:
-            localeFullName = QSettings().value("locale/userLocale", QVariant("")).toString()
+            localeFullName = QSettings().value("locale/userLocale", "")
 
         if QFileInfo(userPluginPath).exists():
             translationPath = userPluginPath + "/i18n/qconsolidate_" + localeFullName + ".qm"
@@ -72,18 +66,19 @@ class QConsolidatePlugin(object):
             QCoreApplication.installTranslator(self.translator)
 
     def initGui(self):
-        if int(self.QgisVersion) < 10800:
+        if int(self.qgsVersion) < 20000:
+            qgisVersion = self.qgsVersion[0] + "." + self.qgsVersion[2] + "." + self.qgsVersion[3]
             QMessageBox.warning(self.iface.mainWindow(), "QConsolidate",
-                                QCoreApplication.translate("QConsolidate", "Quantum GIS version detected: ") + unicode(self.QgisVersion) + ".xx\n" +
-                                QCoreApplication.translate("QConsolidate", "This version of QConsolidate requires at least QGIS version 1.8.0\nPlugin will not be enabled."))
+                                QCoreApplication.translate("QConsolidate", "QGIS %s detected.\n") % (qgisVersion) +
+                                QCoreApplication.translate("QConsolidate", "This version of QConsolidate requires at least QGIS version 2.0.\nPlugin will not be enabled."))
             return None
 
         self.actionRun = QAction(QIcon(":/icons/qconsolidate.png"), "QConsolidate", self.iface.mainWindow())
         self.actionRun.setStatusTip(QCoreApplication.translate("QConsolidate", "Consolidates all layers from current QGIS project into one directory"))
         self.actionAbout = QAction(QIcon(":/icons/about.png"), "About QConsolidate", self.iface.mainWindow())
 
-        QObject.connect(self.actionRun, SIGNAL("triggered()"), self.run)
-        QObject.connect(self.actionAbout, SIGNAL("triggered()"), self.about)
+        self.actionRun.triggered.connect(self.run)
+        self.actionAbout.triggered.connect(self.about)
 
         self.iface.addPluginToMenu(QCoreApplication.translate("QConsolidate", "QConsolidate"), self.actionRun)
         self.iface.addPluginToMenu(QCoreApplication.translate("QConsolidate", "QConsolidate"), self.actionAbout)
@@ -109,23 +104,15 @@ class QConsolidatePlugin(object):
         lines.addWidget(QLabel("  Alexander Bruy (NextGIS)"))
         lines.addWidget(QLabel(QApplication.translate("QConsolidate", "<b>Homepage:</b>")))
 
-        overrideLocale = QSettings().value("locale/overrideFlag", QVariant(False)).toBool()
+        overrideLocale = QSettings().value("locale/overrideFlag", False, type=bool)
         if not overrideLocale:
             localeFullName = QLocale.system().name()
         else:
-            localeFullName = QSettings().value("locale/userLocale", QVariant("")).toString()
-
-        #~ localeShortName = localeFullName[0:2]
-        #~ if localeShortName in ["ru", "uk"]:
-          #~ link = QLabel("<a href=\"http://gis-lab.info/qa/qconsolidate.html\">http://gis-lab.info/qa/qconsolidate.html</a>")
-        #~ else:
-          #~ link = QLabel("<a href=\"http://gis-lab.info/qa/qconsolidate-eng.html\">http://gis-lab.info/qa/qconsolidate-eng.html</a>")
-        #~ link.setOpenExternalLinks(True)
-        #~ lines.addWidget(link)
+            localeFullName = QSettings().value("locale/userLocale", "")
 
         btnClose = QPushButton(QApplication.translate("QConsolidate", "Close"))
         lines.addWidget(btnClose)
-        QObject.connect(btnClose, SIGNAL("clicked()"), dlgAbout, SLOT("close()"))
+        btnClose.clicked.connect(dlgAbout.close)
 
         dlgAbout.exec_()
 
