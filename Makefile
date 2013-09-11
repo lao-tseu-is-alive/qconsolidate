@@ -35,14 +35,21 @@ $(LANG_FILES): $(LANG_PATH)/%.qm: $(LANG_PATH)/%.ts
 $(RES_FILES): $(RES_PATH)/%_rc.py: $(RES_PATH)/%.qrc
 	pyrcc4 -o $@ $<
 
+pep8:
+	@echo
+	@echo "-----------"
+	@echo "PEP8 issues"
+	@echo "-----------"
+	@pep8 --repeat --ignore=E203,E121,E122,E123,E124,E125,E126,E127,E128 --exclude resources_rc.py . || true
+
 clean:
 	rm -f $(ALL_FILES)
-	rm -f *.pyc
+	find -name "*.pyc" -exec rm -f {} \;
 	rm -f *.zip
 
 package:
-	cd .. && rm -f *.zip && zip -r qconsolidate.experimental.zip qconsolidate -x \*.pyc -x \*~ -x \*.git\*
-	mv ../qconsolidate.experimental.zip .
+	cd .. && rm -f *.zip && zip -r qconsolidate.zip qconsolidate -x \*.pyc \*.ts \*.ui \*.qrc \*.pro \*~ \*.git\* \*Makefile*
+	mv ../qconsolidate.zip .
 
 upload:
-	plugin_uploader.py qconsolidate.experimental.zip
+	plugin_uploader.py qconsolidate.zip

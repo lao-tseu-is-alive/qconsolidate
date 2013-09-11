@@ -7,7 +7,7 @@
 # Consolidates all layers from current QGIS project into one directory and
 # creates copy of current project using this consolidated layers.
 #
-# Copyright (C) 2012 Alexander Bruy (alexander.bruy@gmail.com), NextGIS
+# Copyright (C) 2012-2013 Alexander Bruy (alexander.bruy@gmail.com)
 #
 # This source is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free
@@ -26,6 +26,7 @@
 #
 #******************************************************************************
 
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtXml import *
@@ -36,104 +37,109 @@ from qgis.gui import *
 from ui_qconsolidatedialogbase import Ui_QConsolidateDialog
 import consolidatethread
 
-class QConsolidateDialog( QDialog, Ui_QConsolidateDialog ):
-  def __init__( self, iface ):
-    QDialog.__init__( self )
-    self.setupUi( self )
-    self.iface = iface
 
-    self.workThread = None
+class QConsolidateDialog(QDialog, Ui_QConsolidateDialog):
+    def __init__(self, iface):
+        QDialog.__init__(self)
+        self.setupUi(self)
+        self.iface = iface
 
-    self.btnOk = self.buttonBox.button( QDialogButtonBox.Ok )
-    self.btnClose = self.buttonBox.button( QDialogButtonBox.Close )
+        self.workThread = None
 
-    QObject.connect( self.btnBrowse, SIGNAL( "clicked()" ), self.setOutDirectory )
+        self.btnOk = self.buttonBox.button(QDialogButtonBox.Ok)
+        self.btnClose = self.buttonBox.button(QDialogButtonBox.Close)
 
-  def setOutDirectory( self ):
-    outDir = QFileDialog.getExistingDirectory( self,
-                                               self.tr( "Select output directory" ),
-                                               "." )
-    if outDir.isEmpty():
-      return
+        QObject.connect(self.btnBrowse, SIGNAL("clicked()"), self.setOutDirectory)
 
-    self.leOutputDir.setText( outDir )
+    def setOutDirectory(self):
+        outDir = QFileDialog.getExistingDirectory(self,
+                                                  self.tr("Select output directory"),
+                                                  ".")
+        if outDir.isEmpty():
+            return
 
-  def accept( self ):
-    outputDir = self.leOutputDir.text()
-    if outputDir.isEmpty():
-      QMessageBox.warning( self,
-                           self.tr( "QConsolidate: Error" ),
-                           self.tr( "Output directory is not set. Please specify output directory." ) )
-      return
+        self.leOutputDir.setText(outDir)
 
-    # create directory for layers if not exists
-    d = QDir( outputDir )
-    if d.exists( "layers" ):
-      res = QMessageBox.question( self,
-                                  self.tr( "Directory exists" ),
-                                  self.tr( "Output directory already contains 'layers' subdirectory. " +
-                                           "Maybe this directory was used to consolidate another project. Continue?" ),
-                                  QMessageBox.Yes | QMessageBox.No )
-      if res == QMessageBox.No:
+    def accept(self):
+        outputDir = self.leOutputDir.text()
+        if outputDir.isEmpty():
+            QMessageBox.warning(self,
+                                self.tr("QConsolidate: Error"),
+                                self.tr("Output directory is not set. Please specify output directory.")
+                               )
+            return
+
+        # create directory for layers if not exists
+        d = QDir(outputDir)
+        if d.exists("layers"):
+            res = QMessageBox.question(self,
+                                       self.tr("Directory exists"),
+                                       self.tr("Output directory already contains 'layers' subdirectory. " +
+                                               "Maybe this directory was used to consolidate another project. Continue?"),
+                                       QMessageBox.Yes | QMessageBox.No
+                                      )
+            if res == QMessageBox.No:
+                return
+        else:
+            if not d.mkdir("layers"):
+                QMessageBox.warning(self,
+                                    self.tr("QConsolidate: Error"),
+                                    self.tr("Can't create directory for layers.")
+                                   )
+                return
+
+        # copy project file
+        projectFile = QgsProject.instance().fileName()
+        f = QFile(projectFile)
+        newProjectFile = outputDir + "/" + QFileInfo(projectFile).fileName()
+        f.copy(newProjectFile)
+
+        # start consolidate thread that does all real work
+        self.workThread = consolidatethread.ConsolidateThread(self.iface, outputDir, newProjectFile)
+        QObject.connect(self.workThread, SIGNAL("rangeChanged(int)"), self.setProgressRange)
+        QObject.connect(self.workThread, SIGNAL("updateProgress()"), self.updateProgress)
+        QObject.connect(self.workThread, SIGNAL("processFinished()"), self.processFinished)
+        QObject.connect(self.workThread, SIGNAL("processInterrupted()"), self.processInterrupted)
+        QObject.connect(self.workThread, SIGNAL("processError(PyQt_PyObject)"), self.processError)
+
+        self.btnClose.setText(self.tr("Cancel"))
+        QObject.disconnect(self.buttonBox, SIGNAL("rejected()"), self.reject)
+        QObject.connect(self.btnClose, SIGNAL("clicked()"), self.stopProcessing)
+
+        self.workThread.start()
+
+    def setProgressRange(self, maxValue):
+        self.progressBar.setRange(0, maxValue)
+        self.progressBar.setValue(0)
+
+    def updateProgress(self):
+        self.progressBar.setValue(self.progressBar.value() + 1)
+
+    def processFinished(self):
+        self.stopProcessing()
+        self.restoreGui()
+
+    def processInterrupted(self):
+        self.restoreGui()
+
+    def processError(self, message):
+        QMessageBox.warning(self,
+                            self.tr("QConsolidate: Error"),
+                            message
+                           )
+        self.restoreGui()
         return
-    else:
-      if not d.mkdir( "layers" ):
-        QMessageBox.warning( self,
-                             self.tr( "QConsolidate: Error" ),
-                             self.tr( "Can't create directory for layers." ) )
-        return
 
-    # copy project file
-    projectFile = QgsProject.instance().fileName()
-    f = QFile( projectFile )
-    newProjectFile = outputDir + "/" + QFileInfo( projectFile ).fileName()
-    f.copy( newProjectFile )
+    def stopProcessing(self):
+        if self.workThread is not None:
+            self.workThread.stop()
+            self.workThread = None
 
-    # start consolidate thread that does all real work
-    self.workThread = consolidatethread.ConsolidateThread( self.iface, outputDir, newProjectFile )
-    QObject.connect( self.workThread, SIGNAL( "rangeChanged( int )" ), self.setProgressRange )
-    QObject.connect( self.workThread, SIGNAL( "updateProgress()" ), self.updateProgress )
-    QObject.connect( self.workThread, SIGNAL( "processFinished()" ), self.processFinished )
-    QObject.connect( self.workThread, SIGNAL( "processInterrupted()" ), self.processInterrupted )
-    QObject.connect( self.workThread, SIGNAL( "processError( PyQt_PyObject )" ), self.processError )
+    def restoreGui(self):
+        self.progressBar.setRange(0, 1)
+        self.progressBar.setValue(0)
 
-    self.btnClose.setText( self.tr( "Cancel" ) )
-    QObject.disconnect( self.buttonBox, SIGNAL( "rejected()" ), self.reject )
-    QObject.connect( self.btnClose, SIGNAL( "clicked()" ), self.stopProcessing )
-
-    self.workThread.start()
-
-  def setProgressRange( self, maxValue ):
-    self.progressBar.setRange( 0, maxValue )
-    self.progressBar.setValue( 0 )
-
-  def updateProgress( self ):
-    self.progressBar.setValue( self.progressBar.value() + 1 )
-
-  def processFinished( self ):
-    self.stopProcessing()
-    self.restoreGui()
-
-  def processInterrupted( self ):
-    self.restoreGui()
-
-  def processError( self, message ):
-    QMessageBox.warning( self,
-                         self.tr( "QConsolidate: Error" ),
-                         message )
-    self.restoreGui()
-    return
-
-  def stopProcessing( self ):
-    if self.workThread != None:
-      self.workThread.stop()
-      self.workThread = None
-
-  def restoreGui( self ):
-    self.progressBar.setRange( 0, 1 )
-    self.progressBar.setValue( 0 )
-
-    QApplication.restoreOverrideCursor()
-    QObject.connect( self.buttonBox, SIGNAL( "rejected()" ), self.reject )
-    self.btnClose.setText( self.tr( "Close" ) )
-    self.btnOk.setEnabled( True )
+        QApplication.restoreOverrideCursor()
+        QObject.connect(self.buttonBox, SIGNAL("rejected()"), self.reject)
+        self.btnClose.setText(self.tr("Close"))
+        self.btnOk.setEnabled(True)

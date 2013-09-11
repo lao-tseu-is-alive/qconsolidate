@@ -5,15 +5,15 @@ category=Plugins
 version=0.1.0
 qgisMinimumVersion=1.8.0
 
-author=Alexander Bruy (NextGIS)
+author=Alexander Bruy
 email=alexander.bruy@gmail.com
 
 icon=icons/qconsolidate.png
 
-tags=project, consolidate
+tags=project,consolidate
 
-homepage =
-tracker=http://hub.qgis.org/projects/qconsolidate
+homepage=http://hub.qgis.org/projects/qconsolidate/wiki
+tracker=http://hub.qgis.org/projects/qconsolidate/issues
 repository=http://github.com/alexbruy/qconsolidate
 
 experimental=True
