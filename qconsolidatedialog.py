@@ -35,7 +35,7 @@ from qgis.core import *
 from qgis.gui import *
 
 import consolidatethread
-from ui_qconsolidatedialogbase import Ui_QConsolidateDialog
+from ui.ui_qconsolidatedialogbase import Ui_QConsolidateDialog
 
 
 class QConsolidateDialog(QDialog, Ui_QConsolidateDialog):
